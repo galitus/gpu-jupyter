@@ -111,9 +111,18 @@ else
   echo "Set 'no-useful-packages', not installing stuff within src/Dockerfile.usefulpackages."
 fi
 
+  echo "
+  ############################################################################
+  ########################## Dependency: igg #############################
+  ############################################################################
+  " >> $DOCKERFILE
+  cat src/Dockerfile.igg >> $DOCKERFILE
+  cp src/kernel.json .build/
+
+
 # Copy the demo notebooks and change permissions
-cp -r extra/Getting_Started data
-chmod -R 755 data/
+#cp -r extra/Getting_Started data
+#chmod -R 755 data/
 
 # Copying config
 cp src/jupyter_notebook_config.json .build/

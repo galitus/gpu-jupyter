@@ -1,0 +1,99 @@
+LABEL authors="Matthias Druve <matthias.druve@tu-berlin.de>"
+
+USER root
+
+### install jupyterlab extensions ###
+#RUN pip install --no-cache-dir jupyterlab-nvdashboard
+#RUN jupyter labextension install jupyterlab-nvdashboard
+RUN pip install --no-cache-dir nbresuse
+RUN jupyter labextension install jupyterlab-topbar-extension \
+                             jupyterlab-system-monitor \
+                             jupyterlab-topbar-text \  
+                             jupyterlab-logout \
+                             jupyterlab-theme-toggle
+
+RUN jupyter labextension install @jupyterlab/geojson-extension
+
+RUN pip install --no-cache-dir ipympl
+#RUN conda install --quiet --yes nodejs
+RUN jupyter lab build
+
+RUN pip install --no-cache-dir ipyleaflet
+RUN jupyter labextension install jupyter-leaflet
+
+RUN pip install --no-cache-dir ipywidgets
+RUN pip install --no-cache-dir keplergl
+RUN jupyter labextension install keplergl-jupyter
+
+### install postgresql kernel + dep ###
+RUN apt-get install -qy libpq-dev
+RUN pip install --no-cache-dir postgres_kernel
+
+RUN mkdir /opt/conda/share/jupyter/kernels/postgres
+COPY kernel.json /opt/conda/share/jupyter/kernels/postgres/
+
+### fix tensorflow cuda 10.1 dependency by linking 10.1 to 10.2 lib, which is compatible
+RUN ln -s /opt/conda/lib/libcudart.so.10.2 /opt/conda/lib/libcudart.so.10.1
+
+RUN apt-get install -qy cuda-toolkit-10-2 
+#nvidia-driver-455
+
+### install python libs ###
+#RUN pip install --no-cache-dir MinkowskiEngine
+#RUN export TORCH_CUDA_ARCH_LIST="7.0;7.5"
+#RUN FORCE_CUDA=1 pip install --no-cache-dir torch-points3d
+RUN apt-get update -qy
+#RUN apt-get install -qy software-properties-common
+#RUN add-apt-repository -y ppa:ubuntugis/ppa
+
+#RUN apt-get install -qy libgeos-dev python3-gdal python3-rtree python3-cartopy
+RUN conda install --no-channel-priority --quiet --yes -c conda-forge graph-tool gdal rtree cartopy pdal
+
+#RUN apt-get install -qy pycluster python3-gdal
+RUN pip install --no-cache-dir affine rasterio Pillow scikit-image scikit-learn brewer2mpl opencv-python pysal ogr
+RUN pip install --no-cache-dir osmnx==0.15.1 tqdm pdal
+RUN pip install --no-cache-dir pyclustering
+
+#RUN echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt bionic main" >> /etc/apt/sources.list
+##RUN apt-key adv --keyserver keys.openpgp.org --recv-key 612DEFB798507F25
+#RUN wget -qO - https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
+#RUN apt-get update
+#RUN apt-get install -qy python3-graph-tool
+
+#laszip
+RUN cd /tmp
+RUN git clone https://github.com/LASzip/LASzip.git
+RUN mkdir LASzip/build && cd LASzip/build && cmake .. && make && make install
+#RUN cmake ..
+#RUN make
+#RUN make install
+
+RUN pip install --no-cache-dir laspy
+
+### octave
+RUN apt-get install -qy octave octave-symbolic octave-signal octave-plplot octave-statistics
+RUN conda install --quiet --yes --no-channel-priority -c conda-forge octave_kernel
+RUN conda install --quiet --yes --no-channel-priority texinfo
+
+### cling
+#RUN conda config --set allow_conda_downgrades true
+#RUN conda update --prefix /opt/conda anaconda
+#RUN conda install --quiet --yes xeus-cling -c conda-forge
+#RUN conda config --set allow_conda_downgrades false
+RUN conda install --quiet --yes --no-channel-priority -c conda-forge xeus-cling
+
+RUN conda install --quiet --yes --no-channel-priority -c conda-forge ocl-icd
+
+### install another sql kernel ###
+#RUN pip install --no-cache-dir ipython-sql
+
+RUN conda clean --all -f -y && \
+    fix-permissions $CONDA_DIR && \
+    fix-permissions /home/$NB_USER
+
+#RUN fix-permissions /home/$NB_USER
+
+# Switch back to jovyan to avoid accidental container runs as root
+USER $NB_UID
+
+RUN rm -R /home/jovyan/.yarn

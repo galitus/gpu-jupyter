@@ -12,9 +12,9 @@ RUN conda install --quiet --yes \
 
 # Check compatibility here: https://pytorch.org/get-started/locally/
 RUN conda install --quiet --yes \
-     pytorch \ 
+     pytorch==1.6.0 \ 
      torchvision \
-     cudatoolkit=10.1 -c pytorch
+     cudatoolkit=10.2 -c pytorch
 #    pip install torch_nightly -f https://download.pytorch.org/whl/nightly/cu90/torch_nightly.html && \
 
 # Clean installation
